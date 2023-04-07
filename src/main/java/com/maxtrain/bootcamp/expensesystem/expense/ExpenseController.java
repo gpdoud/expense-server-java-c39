@@ -31,6 +31,14 @@ public class ExpenseController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		return new ResponseEntity<Expense>(optExpense.get(), HttpStatus.OK);
 	}
+	@GetMapping("approved")
+	public ResponseEntity<Iterable<Expense>> getApprovedExpenses() {
+		return new ResponseEntity<Iterable<Expense>>(expRepo.findByStatus(Expense.STATUS_APPROVED), HttpStatus.OK);
+	}
+	@GetMapping("review")
+	public ResponseEntity<Iterable<Expense>> getExpensesInReview() {
+		return new ResponseEntity<Iterable<Expense>>(expRepo.findByStatus(Expense.STATUS_REVIEW), HttpStatus.OK);
+	}
 	@PostMapping
 	public ResponseEntity<Expense> postExpense(@RequestBody Expense expense) {
 		if(expense == null)
@@ -45,6 +53,36 @@ public class ExpenseController {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		expRepo.save(expense);
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+	@SuppressWarnings("rawtypes")
+	@PutMapping("review/{id}")
+	public ResponseEntity reviewExpense(@PathVariable int id, @RequestBody Expense expense) {
+		if(expense == null || expense.getId() != id)
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		expense.setStatus(
+			expense.getTotal() <= 75 
+				? Expense.STATUS_APPROVED 
+				: Expense.STATUS_REVIEW
+		);
+		//expRepo.save(expense);
+		//return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		return putExpense(id, expense);
+	}
+	@SuppressWarnings("rawtypes")
+	@PutMapping("approve/{id}")
+	public ResponseEntity approveExpense(@PathVariable int id, @RequestBody Expense expense) {
+		if(expense == null || expense.getId() != id)
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		expense.setStatus(Expense.STATUS_APPROVED);
+		return putExpense(id, expense);
+	}
+	@SuppressWarnings("rawtypes")
+	@PutMapping("reject/{id}")
+	public ResponseEntity rejectExpense(@PathVariable int id, @RequestBody Expense expense) {
+		if(expense == null || expense.getId() != id)
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		expense.setStatus(Expense.STATUS_REJECTED);
+		return putExpense(id, expense);
 	}
 	@SuppressWarnings("rawtypes")
 	@PutMapping("pay/{id}")
